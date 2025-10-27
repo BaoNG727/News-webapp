@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'comment',
     'blacklist',
+    'twofa',  # Two-Factor Authentication
     'django_crontab',  # for cron tab
     'qr_code', # For QR Code
 ]
@@ -60,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'twofa.middleware.TwoFactorAuthMiddleware',  # Two-Factor Authentication
 ]
 
 ROOT_URLCONF = 'newsportal.urls'

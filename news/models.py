@@ -6,7 +6,7 @@ from django.utils.text import slugify
 
 class News(models.Model):
     name = models.CharField(max_length=200, verbose_name="Title")
-    slug = models.SlugField(max_length=250, unique=True, blank=True, help_text="Auto-generated from title")
+    slug = models.SlugField(max_length=250, unique=True, blank=True, null=True, help_text="Auto-generated from title")
     short_txt = models.TextField(verbose_name="Short Description")
     body_txt = models.TextField(verbose_name="Content")
     date = models.CharField(max_length=12)

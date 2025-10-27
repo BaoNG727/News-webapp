@@ -1,0 +1,135 @@
+{% extends 'back/master.html' %}
+
+{% block title %}Setup Two-Factor Authentication{% endblock %}
+
+{% block mainblock %}
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="block">
+            <div class="block-title">
+                <h2><i class="fa fa-shield"></i> <strong>Setup</strong> Two-Factor Authentication</h2>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i>
+                <strong>What is Two-Factor Authentication?</strong>
+                <p>2FA adds an extra layer of security to your account. You'll need both your password and a code from your phone to login.</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <!-- QR Code Section -->
+                <div class="col-md-6">
+                    <h4><i class="fa fa-qrcode"></i> Step 1: Scan QR Code</h4>
+                    <p>Use an authenticator app like Google Authenticator, Authy, or Microsoft Authenticator to scan this QR code:</p>
+                    
+                    <div class="text-center" style="padding: 20px; background: white; border: 2px solid #ddd; border-radius: 5px;">
+                        <div id="qrcode"></div>
+                    </div>
+                    
+                    <div class="alert alert-warning" style="margin-top: 15px;">
+                        <small><i class="fa fa-warning"></i> Keep this QR code secure. Anyone with access to it can generate codes for your account.</small>
+                    </div>
+                </div>
+
+                <!-- Manual Entry Section -->
+                <div class="col-md-6">
+                    <h4><i class="fa fa-key"></i> Step 1 (Alternative): Manual Entry</h4>
+                    <p>If you can't scan the QR code, enter this secret key manually:</p>
+                    
+                    <div class="form-group">
+                        <label>Secret Key:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="secret-key" value="{{ secret_key }}" readonly>
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="button" onclick="copySecret()">
+                                    <i class="fa fa-copy"></i> Copy
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+
+                    <h4><i class="fa fa-check-circle"></i> Step 2: Verify Setup</h4>
+                    <p>Enter the 6-digit code from your authenticator app to complete setup:</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Verification Code:</label>
+                            <input type="text" name="code" class="form-control" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autofocus>
+                            <small class="text-muted">Enter the 6-digit code from your app</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" name="verify" class="btn btn-success btn-lg">
+                                <i class="fa fa-check"></i> Enable Two-Factor Authentication
+                            </button>
+                            
+                            <button type="submit" name="regenerate" class="btn btn-warning">
+                                <i class="fa fa-refresh"></i> Regenerate Secret
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <h4><i class="fa fa-question-circle"></i> Need Help?</h4>
+                    <ul>
+                        <li><strong>Recommended Apps:</strong> Google Authenticator (iOS/Android), Authy (iOS/Android), Microsoft Authenticator</li>
+                        <li><strong>Lost Phone?</strong> You'll receive backup codes after setup that can be used if you lose access to your phone</li>
+                        <li><strong>Multiple Devices?</strong> Scan the same QR code on multiple devices</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include QRCode.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+// Generate QR code
+document.addEventListener('DOMContentLoaded', function() {
+    var qrcode = new QRCode(document.getElementById("qrcode"), {
+        text: "{{ provisioning_uri }}",
+        width: 256,
+        height: 256,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+});
+
+// Copy secret key to clipboard
+function copySecret() {
+    var secretKey = document.getElementById('secret-key');
+    secretKey.select();
+    secretKey.setSelectionRange(0, 99999); // For mobile devices
+    
+    document.execCommand('copy');
+    
+    alert('Secret key copied to clipboard!');
+}
+</script>
+
+<style>
+#qrcode {
+    display: inline-block;
+}
+#qrcode img {
+    margin: 0 auto;
+}
+</style>
+{% endblock %}

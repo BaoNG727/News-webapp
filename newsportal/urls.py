@@ -18,6 +18,7 @@ urlpatterns = [
     re_path(r'', include('newsletter.urls')),   # here newsletter is an app name
     re_path(r'', include('comment.urls')),      # here comment is an app name
     re_path(r'', include('blacklist.urls')),    # here blacklist is an app name (for IP)
+    re_path(r'^2fa/', include('twofa.urls')),   # here twofa is an app name (Two-Factor Authentication)
 ]
 
 if settings.DEBUG:

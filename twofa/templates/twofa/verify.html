@@ -1,0 +1,73 @@
+{% extends 'front/master.html' %}
+
+{% block title %}Two-Factor Verification{% endblock %}
+
+{% block mainblock %}
+<div class="container" style="margin-top: 50px;">
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-shield"></i> Two-Factor Verification
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <p class="text-center">
+                        <i class="fa fa-mobile" style="font-size: 48px; color: #007bff;"></i>
+                    </p>
+                    
+                    <p class="text-center">
+                        Enter the 6-digit code from your authenticator app or use a backup code.
+                    </p>
+
+                    <form method="post" id="verify-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Verification Code:</label>
+                            <input type="text" 
+                                   name="code" 
+                                   class="form-control input-lg text-center" 
+                                   placeholder="000000" 
+                                   maxlength="9" 
+                                   required 
+                                   autofocus
+                                   style="letter-spacing: 5px; font-size: 24px; font-family: monospace;">
+                            <small class="text-muted">6-digit code or backup code (XXXX-XXXX)</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">
+                            <i class="fa fa-check"></i> Verify
+                        </button>
+                    </form>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <a href="{% url 'mylogout' %}" class="btn btn-link">
+                            <i class="fa fa-sign-out"></i> Logout
+                        </a>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-top: 15px;">
+                        <small>
+                            <i class="fa fa-question-circle"></i>
+                            <strong>Need help?</strong><br>
+                            - Lost your phone? Use a backup code<br>
+                            - No backup codes? Contact administrator
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
