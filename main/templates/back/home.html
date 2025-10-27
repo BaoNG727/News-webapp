@@ -1,0 +1,87 @@
+
+{% extends 'back/master.html' %}
+
+{% load static %}
+
+{% load humanize %}
+
+{% block mainblock %}
+
+<!-- Mini Top Stats Row (Index page of admin panel) Start -->
+<div class="row">
+    <div class="col-sm-6 col-lg-3">
+        <!-- Widget -->
+        <a href="{% url 'news_list' %}" class="widget widget-hover-effect1">
+            <div class="widget-simple">
+                <div class="widget-icon pull-left themed-background-autumn animation-fadeIn">
+                    <i class="fa fa-file-text"></i>
+                </div>
+                <h3 class="widget-content text-right animation-pullDown">
+                    <strong>Articles</strong><br>
+                    <small>Manage News</small>
+                </h3>
+            </div>
+        </a>
+        <!-- END Widget -->
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <!-- Widget -->
+        <a href="{% url 'news_add' %}" class="widget widget-hover-effect1">
+            <div class="widget-simple">
+                <div class="widget-icon pull-left themed-background-spring animation-fadeIn">
+                    <i class="fa fa-plus"></i>
+                </div>
+                <h3 class="widget-content text-right animation-pullDown">
+                    <strong>Add News</strong><br>
+                    <small>Create Article</small>
+                </h3>
+            </div>
+        </a>
+        <!-- END Widget -->
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <!-- Widget -->
+        <a href="{% url 'contact_show' %}" class="widget widget-hover-effect1">
+            <div class="widget-simple">
+                <div class="widget-icon pull-left themed-background-fire animation-fadeIn">
+                    <i class="gi gi-envelope"></i>
+                </div>
+                <h3 class="widget-content text-right animation-pullDown">
+                    <strong>Messages</strong>
+                    <small>Contact Forms</small>
+                </h3>
+            </div>
+        </a>
+        <!-- END Widget -->
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <!-- Widget -->
+        <a href="{% url 'cat_list' %}" class="widget widget-hover-effect1">
+            <div class="widget-simple">
+                <div class="widget-icon pull-left themed-background-amethyst animation-fadeIn">
+                    <i class="fa fa-folder"></i>
+                </div>
+                <h3 class="widget-content text-right animation-pullDown">
+                    <strong>Categories</strong>
+                    <small>Manage Categories</small>
+                </h3>
+            </div>
+        </a>
+        <!-- END Widget -->
+    </div>
+
+</div>
+<!-- Mini Top Stats Row (Index page of admin panel) End -->
+
+<!-- random string for dashboard Start -->
+{{ rand | intword }}
+<!-- random string for dashboard End -->
+
+{% endblock %}
+
+
+{% block footerblock %}
+<!-- Load and execute javascript code used only in this page -->
+<script src="{% static 'back/js/pages/index.js' %}"></script>
+<script>$(function(){ Index.init(); });</script>
+        {% endblock %}
