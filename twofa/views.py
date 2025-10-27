@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
@@ -11,7 +11,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from crypto_core import TOTP, Base32
 
-from .models import TwoFactorAuth, BackupCode, TwoFactorLog
+from .models import TwoFactorAuth, BackupCode, TwoFactorLog, EmailVerificationCode
+from .email_utils import send_verification_email
 
 
 def get_client_ip(request):
@@ -268,12 +269,74 @@ def verify_2fa_page(request):
         messages.warning(request, "Two-Factor Authentication is not enabled.")
         return redirect('twofa_setup')
     
+    # Handle send email request
+    if request.method == 'POST' and 'send_email' in request.POST:
+        if not request.user.email:
+            messages.error(request, "No email address registered. Please use authenticator app.")
+            return redirect('twofa_verify_page')
+        
+        # Generate and send code
+        email_code = EmailVerificationCode.generate_for_user(
+            request.user,
+            ip_address=get_client_ip(request)
+        )
+        
+        if send_verification_email(request.user, email_code.code, email_code.token, request):
+            messages.success(request, f"Verification code sent to {request.user.email}")
+        else:
+            messages.error(request, "Failed to send email. Please try again or use authenticator app.")
+        
+        return redirect('twofa_verify_page')
+    
     if request.method == 'POST':
         code = request.POST.get('code', '').strip()
         
         if not code:
             messages.error(request, "Please enter a verification code.")
             return redirect('twofa_verify_page')
+        
+        # Check if it's an email code (6 digits only)
+        if code.isdigit() and len(code) == 6:
+            try:
+                email_code = EmailVerificationCode.objects.get(
+                    user=request.user,
+                    code=code,
+                    is_used=False
+                )
+                
+                if email_code.is_valid():
+                    email_code.use()
+                    twofa.mark_used()
+                    
+                    TwoFactorLog.log_attempt(
+                        user=request.user,
+                        success=True,
+                        method='email',
+                        ip_address=get_client_ip(request),
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')
+                    )
+                    
+                    # Mark as verified
+                    request.session['2fa_verified'] = True
+                    request.session['2fa_verified_at'] = str(timezone.now())
+                    
+                    messages.success(request, "Email verification successful!")
+                    
+                    # Redirect to original page or dashboard
+                    next_url = request.session.pop('2fa_next', 'panel')
+                    return redirect(next_url)
+                else:
+                    messages.error(request, "Email code has expired. Request a new one.")
+                    TwoFactorLog.log_attempt(
+                        user=request.user,
+                        success=False,
+                        method='email',
+                        ip_address=get_client_ip(request),
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')
+                    )
+            except EmailVerificationCode.DoesNotExist:
+                # Not an email code, try TOTP
+                pass
         
         # Check if it's a backup code (contains dash)
         if '-' in code:
@@ -345,3 +408,49 @@ def verify_2fa_page(request):
                 )
     
     return render(request, 'twofa/verify.html')
+
+
+@login_required
+def email_verify(request, token):
+    """
+    Verify 2FA via magic link from email
+    """
+    try:
+        email_code = EmailVerificationCode.objects.get(token=token, user=request.user)
+        
+        if not email_code.is_valid():
+            messages.error(request, "This link has expired. Please request a new verification code.")
+            return redirect('twofa_verify_page')
+        
+        # Mark as used
+        email_code.use()
+        
+        # Get twofa
+        try:
+            twofa = TwoFactorAuth.objects.get(user=request.user, is_enabled=True)
+            twofa.mark_used()
+        except TwoFactorAuth.DoesNotExist:
+            pass
+        
+        # Log
+        TwoFactorLog.log_attempt(
+            user=request.user,
+            success=True,
+            method='email',
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        # Mark as verified
+        request.session['2fa_verified'] = True
+        request.session['2fa_verified_at'] = str(timezone.now())
+        
+        messages.success(request, "Email verification successful!")
+        
+        # Redirect to original page or dashboard
+        next_url = request.session.pop('2fa_next', 'panel')
+        return redirect(next_url)
+        
+    except EmailVerificationCode.DoesNotExist:
+        messages.error(request, "Invalid verification link.")
+        return redirect('twofa_verify_page')

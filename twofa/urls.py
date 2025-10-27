@@ -7,4 +7,5 @@ urlpatterns = [
     re_path(r'^manage/$', views.manage_2fa, name='twofa_manage'),
     re_path(r'^verify/$', views.verify_2fa, name='twofa_verify'),
     re_path(r'^verify-page/$', views.verify_2fa_page, name='twofa_verify_page'),
+    re_path(r'^email-verify/(?P<token>[^/]+)/$', views.email_verify, name='twofa_email_verify'),
 ]

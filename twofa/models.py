@@ -128,6 +128,7 @@ class TwoFactorLog(models.Model):
     method = models.CharField(max_length=20, choices=[
         ('totp', 'TOTP Code'),
         ('backup', 'Backup Code'),
+        ('email', 'Email Code'),
     ])
     
     class Meta:
@@ -154,4 +155,70 @@ class TwoFactorLog(models.Model):
             method=method,
             ip_address=ip_address,
             user_agent=user_agent
+        )
+
+
+class EmailVerificationCode(models.Model):
+    """
+    Temporary codes sent via email for 2FA verification.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_codes')
+    code = models.CharField(max_length=6)
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    used_at = models.DateTimeField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Email Verification Code"
+        verbose_name_plural = "Email Verification Codes"
+        db_table = 'twofa_email_codes'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.code} - {'Used' if self.is_used else 'Active'}"
+    
+    def is_valid(self):
+        """Check if code is still valid (not expired and not used)"""
+        from django.utils import timezone
+        return not self.is_used and self.expires_at > timezone.now()
+    
+    def use(self):
+        """Mark code as used"""
+        from django.utils import timezone
+        self.is_used = True
+        self.used_at = timezone.now()
+        self.save()
+    
+    @classmethod
+    def generate_for_user(cls, user, ip_address=None):
+        """Generate new email verification code"""
+        import secrets
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Generate 6-digit code
+        code = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+        
+        # Generate unique token for magic link
+        token = secrets.token_urlsafe(48)
+        
+        # Expire in 10 minutes
+        expires_at = timezone.now() + timedelta(minutes=10)
+        
+        # Delete old unused codes for this user
+        cls.objects.filter(user=user, is_used=False).delete()
+        
+        return cls.objects.create(
+            user=user,
+            code=code,
+            token=token,
+            expires_at=expires_at,
+            ip_address=ip_address
         )

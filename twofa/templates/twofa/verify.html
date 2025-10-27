@@ -4,8 +4,8 @@
 
 {% block mainblock %}
 <div class="container" style="margin-top: 50px;">
-    <div class="row">
-        <div class="col-md-4 col-md-offset-4">
+    <div class="row" style="justify-content: center;">
+        <div class="col-md-4">
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h3 class="panel-title">
@@ -41,13 +41,28 @@
                                    required 
                                    autofocus
                                    style="letter-spacing: 5px; font-size: 24px; font-family: monospace;">
-                            <small class="text-muted">6-digit code or backup code (XXXX-XXXX)</small>
+                            <small class="text-muted">6-digit code from app/email or backup code (XXXX-XXXX)</small>
                         </div>
                         
                         <button type="submit" class="btn btn-primary btn-lg btn-block">
                             <i class="fa fa-check"></i> Verify
                         </button>
                     </form>
+
+                    <hr style="margin: 30px 0;">
+
+                    <div class="text-center">
+                        <p><strong>Don't have your phone?</strong></p>
+                        <form method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" name="send_email" class="btn btn-success btn-lg">
+                                <i class="fa fa-envelope"></i> Send Code to Email
+                            </button>
+                        </form>
+                        <p class="text-muted" style="margin-top: 10px; font-size: 12px;">
+                            We'll send a 6-digit code and instant login link to your email
+                        </p>
+                    </div>
 
                     <hr>
 
