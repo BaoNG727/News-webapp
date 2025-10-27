@@ -23,7 +23,24 @@ def home(request):
     # sitename = "MySite | Home"     
     # return render(request, 'front/home.html', {'sitename':sitename})
     
-    site = Main.objects.get(pk=2)
+    # Get or create Main object safely
+    site, created = Main.objects.get_or_create(
+        pk=2,
+        defaults={
+            'name': 'News Portal',
+            'tell': '+84 123 456 789',
+            'fb': '#',
+            'tw': '#',
+            'yt': '#',
+            'link': '#',
+            'about': 'Welcome to News Portal',
+            'abouttxt': 'About our news portal',
+            'picurl': '-',
+            'picname': '-',
+            'picurl2': '-',
+            'picname2': '-',
+        }
+    )
     news = News.objects.filter(act=1).order_by('-pk')  ## for reverse(ordering) need to filter by pk with (-) to get the latest submission first.
 
     cat = Cat.objects.all()  ## Show categories in footer
@@ -39,16 +56,19 @@ def home(request):
 
     lastnews2 = News.objects.filter(act=1).order_by('-pk')[:4] # Last Four News in Three Different Frames
 
-    random_object = Trending.objects.all()[randint(0, len(trending) -1)] ## Random Object (For Trending now). I just used it for home page. To show the trending randomly
-    # print(random_object)
-    return render(request, 'front/home.html', {'site':site, 'news':news, 'cat':cat, 'subcat':subcat, 'lastnews':lastnews, 'popnews':popnews, 'popnews2':popnews2, 'trending':trending, 'lastnews2':lastnews2})
+    # Random trending (safe check for empty queryset)
+    random_object = None
+    if len(trending) > 0:
+        random_object = Trending.objects.all()[randint(0, len(trending) -1)]
+    
+    return render(request, 'front/home.html', {'site':site, 'news':news, 'cat':cat, 'subcat':subcat, 'lastnews':lastnews, 'popnews':popnews, 'popnews2':popnews2, 'trending':trending, 'lastnews2':lastnews2, 'random_object':random_object})
 ##--#--## Home Page(home) Function For Front (User Interface - Frontend) End ##--#--##
 
 
 ##--#--## About Page(about) Function For Front (User Interface - Frontend) Start ##--#--##
 def about(request):
 
-    site = Main.objects.get(pk=2)
+    site = Main.objects.filter(pk=2).first() or Main.objects.first()
 
     news = News.objects.all().order_by('-pk')  ## for reverse(ordering) need to filter by pk with (-) to get the latest submission first.
 
@@ -92,7 +112,7 @@ def panel(request):
 
     #-# Random Name Of The News (string for dashboard) Start
     count = News.objects.count()
-    rand = News.objects.all()[random.randint(0, count-1)]
+    rand = News.objects.all()[random.randint(0, count-1)] if count > 0 else None
     #-# Random Name Of The News (string for dashboard) End
 
     # if perm == 0 :
@@ -288,7 +308,7 @@ def site_setting(request):
             picname2 = "-"
 
             
-        b = Main.objects.get(pk=2)
+        b = Main.objects.filter(pk=2).first()
         b.name = name
         b.tell = tell
         b.fb = fb
@@ -304,7 +324,7 @@ def site_setting(request):
         
         b.save()
 
-    site = Main.objects.get(pk=2)
+    site = Main.objects.filter(pk=2).first()
 
     return render(request, 'back/setting.html', {'site':site})
 ##--#--## Site Settings (Topbar, fb/yt/tw link, logo etc) Function For Back (Admin Panel - Backend) End ##--#--##
@@ -335,11 +355,11 @@ def about_setting(request):
             error = "All Fields Required"
             return render(request, 'back/error.html', {'error':error})
 
-        b = Main.objects.get(pk=2)
+        b = Main.objects.filter(pk=2).first()
         b.abouttxt = txt
         b.save()
 
-    about = Main.objects.get(pk=2).abouttxt  ## abouttxt is model field name
+    about = Main.objects.filter(pk=2).first().abouttxt  ## abouttxt is model field name
 
     return render(request, 'back/about_setting.html', {'about': about})
 ##--#--## Text Change in About Page(change from admin panel) End ##--#--##
@@ -348,7 +368,7 @@ def about_setting(request):
 ##--#--## Contact Page (contact) Function For Front (User Interface - Frontend) Start ##--#--##
 def contact(request):
     ##--## For Logo, Categories, Sub-Categories, Footer etc Start ##--##
-    site = Main.objects.get(pk=2)
+    site = Main.objects.filter(pk=2).first()
     news = News.objects.all().order_by('-pk')  ## for reverse(ordering) need to filter by pk with (-) to get the latest submission first.
     cat = Cat.objects.all()  ## Show categories in footer
     subcat = SubCat.objects.all()  ## for SubMenu in the menu bar    
